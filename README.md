@@ -14,6 +14,6 @@ scp  root@157.230.159.18:/root/book_discovery.zip /Users/paulngouchet/Desktop/Ol
 gunicorn --bind 0.0.0.0:3002 wsgi:app --daemon
 
 
-The main file is hello_python3.py
+The main file is current_book.py
 
 http://157.230.159.18:3002/
