@@ -1,21 +1,19 @@
-from flask import Flask, render_template, request
 import scrapy
 import time
-from scrapy.crawler import CrawlerProcess
-from subprocess import call
 import difflib
 import ast
 import pickle
 import json
 import os
 import os.path
+import requests
+from flask import Flask, render_template, request
 from os import path
 from os import getcwd
-import requests
-
+from subprocess import call
+from scrapy.crawler import CrawlerProcess
 from mongoengine import *
 connect('book_search_db', host='localhost', port=27017)
-
 
 # For optimization and speed, My code will certainly need lot of caching because i am going over the same arrays data many times
 cx= '005331999340111559203:nb9u1-ynjkw'
@@ -33,7 +31,6 @@ books_cache = None
 dict_books_cache = None
 product_ids_cache = None
 
-
 def matching(a,b):
     seq = difflib.SequenceMatcher(None,a,b)
     d = seq.ratio()*100
@@ -42,7 +39,6 @@ def matching(a,b):
         return True
     else:
         return False
-
     
 class Urls(Document):
     url = StringField()
@@ -62,11 +58,12 @@ class Product_ids(Document):
     id_number = StringField()
     info = StringField()
 
-def build_dict(db_object, a, b):
-    
+def build_dict(db_object, a, b):  
     dict_object = {}
+    
     for object in db_object:
         dict_object[object[a]] = object[b]
+        
     return dict_object
 
 
@@ -77,7 +74,6 @@ def refresh():
     global books_cache
     global dict_books_cache
     global product_ids_cache
-
     searches_cache =  Searches.objects()
     print("called")
     urls_cache = Urls.objects()
@@ -88,9 +84,9 @@ def refresh():
     product_ids_cache = Product_ids.objects()
 
 def generate(book):
-
     dict_object = {}
     print("INFO ABOUT THE BOOK")
+    
     if book.get("volumeInfo") and book["volumeInfo"].get("imageLinks") and book["volumeInfo"].get("description") and book["volumeInfo"].get("title") and book["volumeInfo"].get("authors") :  # Needs to be fixed, i need to display more books
         print(book["volumeInfo"]["title"])
         print(book["volumeInfo"]["description"])
@@ -113,9 +109,7 @@ def search_book(value):
         return rj["items"][0]
     else:
         return False'''
-
     return rj["items"][0]
-
 
 def search_web(value):
     parms = {"q":value,  'key':googleapikey, 'cx':cx, 'num':10}  # 10 maximum results
@@ -127,28 +121,26 @@ def search_web(value):
     rj = r.json()
     print(rj)
     list_website_url = []
+    
     for web in rj["items"]:
         list_website_url.append(web['link'])
 
     return list_website_url
 
-
 def amazon_url(id):
-    
     format = 'http://amzn.com/'
     product_id = id
     amazon_id = 'paulngouche0c-20'
     result = format + id + '/?tag=' + amazon_id
     return result
 
-
 def process_dict_url(urls):
-
     books_found = []
     data = []
     db_book_name = {} # For mongo db, string : string
     db_product_id = {} # For mongo db, string : array string
     # product id, then product name
+    
     for url_book, product in urls.items():
         print("is this the error 1")
         for book in product:
@@ -165,10 +157,8 @@ def process_dict_url(urls):
                 product1.save()
                 refresh()
                 data.clear()
-
                 #print("only url", amazon)
             else:
-
                 data.append(book[1])
                 data.append(book[0])
                 amazon = amazon_url(book[0])  # Create Amazon url
@@ -187,7 +177,6 @@ def process_dict_url(urls):
                     answer = generate(result)
                     if bool(answer) == False:
                         continue
-
                     data_display[url_book] = answer # Might be useless
                     answer["url"] = amazon
                     final_data.append(answer)
@@ -196,13 +185,12 @@ def process_dict_url(urls):
                     book1.save()
                     refresh()
                     data.clear()
-
+                    
         url1 = Urls(url=url_book, info=str(product), books_found=str(books_found))
         url1.save()
         books_found.clear()
         refresh()
-
-                #print("url and book", amazon, book[1])
+        #print("url and book", amazon, book[1])
             
 app = Flask(__name__)
 
@@ -211,12 +199,12 @@ def hello_world():
     data_display.clear()
     final_data.clear()
     print(len(Searches.objects()))
+    
     if len(Searches.objects()) > 0:
         refresh()
         #print(dict_urls_cache)
         for key, value in dict_urls_cache.items():
             print(key)
-
     '''print(Searches.objects())
     print("cached searches" ,searches_cache)
     print("cached urls", urls_cache)
@@ -231,6 +219,7 @@ def query_books():
     tic = time.time()
     data_display.clear()
     final_data.clear()
+    
     if request.method == 'POST':
         query = request.form['search']
         search_query = "Best books about " + query
@@ -240,7 +229,6 @@ def query_books():
                 if matching(object.query, query) == True:
                     match = object
                     break
-
         if match != None:
             match_urls = ast.literal_eval(match.urls)
             output = []
@@ -256,25 +244,27 @@ def query_books():
                         output.append(ast.literal_eval(dict_books_cache[book]))
                         #print(output)
             print("output is", len(output))
-            return render_template("books1.html", books=output)
-
-
-        url_searches = search_web(search_query)
-        search = Searches(query=query, urls=str(url_searches))
-        search.save()
-        refresh()
-        print("getting here")
-        with open('outfile', 'wb') as fp:
-            pickle.dump(url_searches, fp)
-        path_file = getcwd() + "/ blogspider.json"
-        if path.exists(path_file):
-            os.remove(path_file)
-        name = 'blogspider'
-        call(["scrapy", "crawl", "{0}".format(name), "-o {0}.json".format(name)])
-        with open(path_file) as json_file:
-            data = json.load(json_file)
-            dict_url_book = data[-1]
             
+      return render_template("books1.html", books=output)
+
+      url_searches = search_web(search_query)
+      search = Searches(query=query, urls=str(url_searches))
+      search.save()
+      refresh()
+      print("getting here")
+    
+      with open('outfile', 'wb') as fp:
+            pickle.dump(url_searches, fp)
+            
+       path_file = getcwd() + "/ blogspider.json"
+       if path.exists(path_file):
+            os.remove(path_file)
+            name = 'blogspider'
+            call(["scrapy", "crawl", "{0}".format(name), "-o {0}.json".format(name)])
+            with open(path_file) as json_file:
+                data = json.load(json_file)
+                dict_url_book = data[-1]
+                
         print("getting here")
         #print(dict_url_book)
         process_dict_url(dict_url_book)
