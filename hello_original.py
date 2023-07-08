@@ -13,10 +13,7 @@ import requests
 from mongoengine import *
 connect('book_search_db', host='localhost', port=27017)
 
-
 # For optimization and speed, My code will certainly need lot of caching because i am going over the same arrays data many times
-
-
 cx= ''
 googleapikey=""
 dict_url_book = {}
@@ -90,7 +87,6 @@ def process_dict_url(urls):
             print("is this the error 2")
             data = []
              # Use Jinja, array of all the book information, [ index 0 - Book_name, index 1 - product_id,  index 3 - amazon_id, index 4 - Google book url ]
-
             if len(book) == 1:
                 data.append(book[0])
                 amazon = amazon_url(book[0]) # Create Amazon url
