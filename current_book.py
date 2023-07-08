@@ -17,7 +17,6 @@ connect('book_search_db', host='localhost', port=27017)
 
 # For optimization and speed, My code will certainly need lot of caching because i am going over the same arrays data many times
 cx=""
-#googleapikey="AIzaSyCbkWvy9ETOPHh5_lvsRVrdEQNiZt7mlHQ"
 googleapikey=""
 final_data = []
 dict_url_book = {}
