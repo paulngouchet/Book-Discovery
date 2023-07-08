@@ -1,52 +1,26 @@
 from flask import Flask, render_template, request
-
 import scrapy
-
 import time
-
 from scrapy.crawler import CrawlerProcess
-
 from subprocess import call
-
-
-
 import pickle
-
 import json
-
 import os
-
 import os.path
 from os import path
-
 from os import getcwd
-
-
 import requests
-
 from mongoengine import *
 connect('book_search_db', host='localhost', port=27017)
-
-
 # For optimization and speed, My code will certainly need lot of caching because i am going over the same arrays data many times
-
-
-cx= '005331999340111559203:nb9u1-ynjkw'
-
-#googleapikey="AIzaSyCbkWvy9ETOPHh5_lvsRVrdEQNiZt7mlHQ"
-
-googleapikey="AIzaSyBfvhGJU-PqPyOemkIfjozyhmKg54KHlnU"
-
+cx= ''
+googleapikey=""
 final_data = []
-
 dict_url_book = {}
-
 frontend_data = [] # Use Jinja, array of all the book information, [ index 0 - Book_name, index 1 - product_id,  index 3 - amazon_url, index 4 - Google book url ]
-
 other_frontend_data = [] # Just index 0 - the product_id, index 1 - amazon_url
-
-
 data_display = {}
+app = Flask(__name__)
 
 
 class Urls(Document):
@@ -67,7 +41,6 @@ class Product_ids(Document):
 
 
 def generate(book):
-
     dict_object = {}
     print("INFO ABOUT THE BOOK")
     if book.get("volumeInfo") and book["volumeInfo"].get("imageLinks") and book["volumeInfo"].get("description") and book["volumeInfo"].get("title") and book["volumeInfo"].get("authors") :  # Needs to be fixed, i need to display more books
@@ -86,9 +59,7 @@ def search_book(value):
     r = requests.get(url="https://www.googleapis.com/books/v1/volumes", params=parms)
     print(r.url)
     rj = r.json()
-
     print(rj)
-
     #print(rj["items"][0]["volumeInfo"]["title"])
     '''if rj["items"][0] != None:
         return rj["items"][0]
@@ -102,14 +73,11 @@ def search_web(value):
     parms = {"q":value,  'key':googleapikey, 'cx':cx, 'num':10}  # 10 maximum results
     # For restricted queries, use this version of the requests
     #r = requests.get(url="https://www.googleapis.com/customsearch/v1/siterestrict", params=parms)
-
     # For the non restricted version - use - 10K query limit a day - 100 free - $ 5 for every 1000 queries
     r = requests.get(url="https://www.googleapis.com/customsearch/v1", params=parms)
     print(r.url)
     rj = r.json()
     print(rj)
-
-
     list_website_url = []
 
     for web in rj["items"]:
@@ -118,21 +86,15 @@ def search_web(value):
     return list_website_url
 
 
-
-
 def amazon_url(id):
-
     format = 'http://amzn.com/'
     product_id = id
     amazon_id = 'paulngouche0c-20'
-
     result = format + id + '/?tag=' + amazon_id
-
     return result
 
 
 def process_dict_url(urls):
-
     data = []
     db_book_name = {} # For mongo db, string : string
     db_product_id = {} # For mongo db, string : array string
@@ -153,11 +115,9 @@ def process_dict_url(urls):
                 data.append(amazon)
                 other_frontend_data.append(data)
                 #print("other_frontend_data", other_frontend_data)
-
                 product1 = Product_ids(id_number=book[0], info=str([amazon])) # save in db
                 product1.save()
                 data.clear()
-
                 #print("only url", amazon)
             else:
 
@@ -165,10 +125,8 @@ def process_dict_url(urls):
                 data.append(book[0])
                 amazon = amazon_url(book[0])  # Create Amazon url
                 data.append(amazon)
-
                 product1 = Product_ids(id_number=book[0], info=str([amazon, book[1]])) # Save in the database
                 product1.save()
-
                 result = search_book(book[1]) # Search Each book, # Might need to come back for code review
                 data.append(result) # Might be useful, to be deleted
                 frontend_data.append(data)
@@ -178,21 +136,15 @@ def process_dict_url(urls):
                     continue
 
                 data_display[url_book] = answer # Might be useless
-
                 answer["url"] = amazon
                 final_data.append(answer)
-
                 book1 = Books(name=book[1], info=str(result))
                 book1.save()
                 data.clear()
-
                 #print("url and book", amazon, book[1])
 
 
 
-
-
-app = Flask(__name__)
 
 @app.route('/')
 def hello_world():
@@ -209,13 +161,10 @@ def query_books():
     final_data.clear()
     if request.method == 'POST':
         query = request.form['search']
-
         search_query = "Best books about " + query
         url_searches = search_web(search_query)
-
         search = Searches(query=search_query, urls=str(url_searches))
         search.save()
-
         print("getting here")
 
         with open('outfile', 'wb') as fp:
@@ -236,21 +185,13 @@ def query_books():
 
         print("getting here")
         #print(dict_url_book)
-
-
-
         process_dict_url(dict_url_book)
-
         print(len(frontend_data))
         #return "success"
         #return str(frontend_data) # To be fixed
-
         #return str(final_data) # To be fixed
-
         toc = time.time()
-
         print(toc - tic)
-
         return render_template("books1.html", books=final_data)
 
 
