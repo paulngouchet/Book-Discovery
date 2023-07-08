@@ -15,15 +15,12 @@ import requests
 from mongoengine import *
 connect('book_search_db', host='localhost', port=27017)
 
-
 # For optimization and speed, My code will certainly need lot of caching because i am going over the same arrays data many times
 cx= ''
 googleapikey=""
 dict_url_book = {}
 frontend_data = [] # Use Jinja, array of all the book information, [ index 0 - Book_name, index 1 - product_id,  index 3 - amazon_url, index 4 - Google book url ]
 other_frontend_data = [] # Just index 0 - the product_id, index 1 - amazon_url
-
-
 data_display = {}
 
 
@@ -45,7 +42,6 @@ class Product_ids(Document):
 
 
 def generate(book):
-
     dict_object = {}
     print("INFO ABOUT THE BOOK")
     print(type(book), book)
@@ -60,7 +56,6 @@ def generate(book):
         dict_object["title"] = book["volumeInfo"]["title"]
         dict_object["thumbnail"] = book["volumeInfo"]["imageLinks"]["thumbnail"]
         dict_object["authors"] = book["volumeInfo"]["authors"][0]
-
     return dict_object
 
 def search_book(value):
@@ -183,7 +178,6 @@ def query_books():
         #return "success"
         #return str(frontend_data) # To be fixed
         return str(data_display) # To be fixed
-
 
 
 if __name__ == '__main__':
