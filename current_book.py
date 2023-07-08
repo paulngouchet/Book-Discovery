@@ -16,9 +16,9 @@ from mongoengine import *
 connect('book_search_db', host='localhost', port=27017)
 
 # For optimization and speed, My code will certainly need lot of caching because i am going over the same arrays data many times
-cx= '005331999340111559203:nb9u1-ynjkw'
+cx=""
 #googleapikey="AIzaSyCbkWvy9ETOPHh5_lvsRVrdEQNiZt7mlHQ"
-googleapikey="AIzaSyBfvhGJU-PqPyOemkIfjozyhmKg54KHlnU"
+googleapikey=""
 final_data = []
 dict_url_book = {}
 frontend_data = [] # Use Jinja, array of all the book information, [ index 0 - Book_name, index 1 - product_id,  index 3 - amazon_url, index 4 - Google book url ]
